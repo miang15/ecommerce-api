@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import Product from "../models/product.model.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import AppError from "../utils/AppError.js";
 
 export const createProduct = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
@@ -34,33 +35,20 @@ export const getProducts = async (
   }
 };
 
-export const getProductById = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
-  try {
+export const getProductById = asyncHandler(
+  async (req: Request, res: Response): Promise<void> => {
     const product = await Product.findById(req.params.id);
 
     if (!product) {
-      res.status(404).json({
-        success: false,
-        message: "Product not found",
-      });
-      return;
+      throw new AppError("Product not found", 404);
     }
 
     res.status(200).json({
       success: true,
-      message: "Product fetched successfully",
       data: product,
     });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch product",
-    });
-  }
-};
+  },
+);
 
 export const updateProduct = async (
   req: Request,
