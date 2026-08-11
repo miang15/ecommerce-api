@@ -5,6 +5,7 @@ import AppError from "../utils/AppError.js";
 
 export const createProduct = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
+    console.log(req.user);
     const product = await Product.create(req.body);
 
     res.status(201).json({
