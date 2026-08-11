@@ -2,9 +2,22 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+const requiredEnv = (name: string): string => {
+  const value = process.env[name];
+
+  if (!value) {
+    throw new Error(`❌ Missing required environment variable: ${name}`);
+  }
+
+  return value;
+};
+
 export const env = {
-  PORT: process.env.PORT || 5000,
+  PORT: Number(process.env.PORT) || 5000,
+
   NODE_ENV: process.env.NODE_ENV || "development",
-  MONGODB_URI: process.env.MONGODB_URI || "",
-  JWT_SECRET: process.env.JWT_SECRET || "",
+
+  MONGODB_URI: requiredEnv("MONGODB_URI"),
+
+  JWT_SECRET: requiredEnv("JWT_SECRET"),
 };
