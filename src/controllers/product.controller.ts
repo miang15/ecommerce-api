@@ -2,11 +2,26 @@ import { Request, Response } from "express";
 import Product from "../models/product.model.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import AppError from "../utils/AppError.js";
+import Category from "../models/category.model.js";
 
 export const createProduct = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
     console.log(req.user);
-    const product = await Product.create(req.body);
+    const { createdBy, ...productData } = req.body;
+
+    const category = await Category.findOne({
+      _id: productData.category,
+      isActive: true,
+    });
+
+    if (!category) {
+      throw new AppError("Category not found or inactive", 404);
+    }
+
+    const product = await Product.create({
+      ...productData,
+      createdBy: req.user!.userId,
+    });
 
     res.status(201).json({
       success: true,
@@ -21,7 +36,10 @@ export const getProducts = async (
   res: Response,
 ): Promise<void> => {
   try {
-    const products = await Product.find();
+    const products = await Product.find().populate(
+      "createdBy",
+      "name email role",
+    );
 
     res.status(200).json({
       success: true,
@@ -58,6 +76,7 @@ export const updateProduct = async (
   try {
     const product = await Product.findByIdAndUpdate(req.params.id, req.body, {
       returnDocument: "after",
+      runValidators: true,
     });
 
     if (!product) {

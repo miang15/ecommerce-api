@@ -8,7 +8,7 @@ import { env } from "../config/env.js";
 
 export const register = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
-    const { name, email, password } = req.body;
+    const { name, email, password, role } = req.body;
 
     const existingUser = await User.findOne({ email });
 
@@ -21,6 +21,7 @@ export const register = asyncHandler(
     const user = await User.create({
       name,
       email,
+      role,
       password: hashedPassword,
     });
 
@@ -31,6 +32,7 @@ export const register = asyncHandler(
         id: user._id,
         name: user.name,
         email: user.email,
+        role: user.role,
       },
     });
   },
@@ -70,6 +72,7 @@ export const login = asyncHandler(
         id: user._id,
         name: user.name,
         email: user.email,
+        role: user.role,
         token,
       },
     });
