@@ -36,10 +36,9 @@ export const getProducts = async (
   res: Response,
 ): Promise<void> => {
   try {
-    const products = await Product.find().populate(
-      "createdBy",
-      "name email role",
-    );
+    const products = await Product.find()
+      .populate("category", "name description image")
+      .populate("createdBy", "name email role");
 
     res.status(200).json({
       success: true,
@@ -56,7 +55,9 @@ export const getProducts = async (
 
 export const getProductById = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findById(req.params.id)
+      .populate("category", "name description image")
+      .populate("createdBy", "name email role");
 
     if (!product) {
       throw new AppError("Product not found", 404);
