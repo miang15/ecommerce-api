@@ -3,6 +3,7 @@ import Product from "../models/product.model.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import AppError from "../utils/AppError.js";
 import Category from "../models/category.model.js";
+import { getProductsQuerySchema } from "../validators/product.validator.js";
 
 export const createProduct = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
@@ -36,14 +37,60 @@ export const getProducts = async (
   res: Response,
 ): Promise<void> => {
   try {
-    const products = await Product.find()
+    const parsed = getProductsQuerySchema.safeParse(req.query);
+
+    if (!parsed.success) {
+      res.status(400).json({
+        success: false,
+        message: "Invalid query parameters",
+        errors: parsed.error.flatten().fieldErrors,
+      });
+      return;
+    }
+
+    const { page, limit, category, minPrice, maxPrice, sort, order, search } =
+      parsed.data;
+
+    const skip = (page - 1) * limit;
+
+    const filter: Record<string, any> = {};
+
+    if (category) filter.category = category;
+
+    if (minPrice !== undefined || maxPrice !== undefined) {
+      filter.price = {};
+      if (minPrice !== undefined) filter.price.$gte = minPrice;
+      if (maxPrice !== undefined) filter.price.$lte = maxPrice;
+    }
+
+    if (search) {
+      const searchRegex = new RegExp(search, "i");
+      filter.$or = [{ name: searchRegex }, { description: searchRegex }];
+    }
+
+    const sortOrder = order === "asc" ? 1 : -1;
+    const sortObj: Record<string, 1 | -1> = { [sort]: sortOrder };
+
+    const products = await Product.find(filter)
       .populate("category", "name description image")
-      .populate("createdBy", "name email role");
+      .populate("createdBy", "name email role")
+      .sort(sort)
+      .skip(skip)
+      .limit(limit);
+
+    const totalProducts = await Product.countDocuments(filter);
+    const totalPages = Math.ceil(totalProducts / limit);
 
     res.status(200).json({
       success: true,
       message: "Products fetched successfully",
       data: products,
+      pagination: {
+        page,
+        limit,
+        totalProducts,
+        totalPages,
+      },
     });
   } catch (error) {
     res.status(500).json({
