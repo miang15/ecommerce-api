@@ -6,6 +6,7 @@ import {
   getAllOrders,
   getMyOrders,
   getOrderById,
+  getOrderStats,
   updateOrderStatus,
 } from "../controllers/order.controller.js";
 import roleMiddleware from "../middlewares/role.middleware.js";
@@ -15,6 +16,12 @@ const router = Router();
 router.post("/", authMiddleware, createOrder);
 router.get("/", authMiddleware, getMyOrders);
 router.get("/admin", authMiddleware, roleMiddleware("admin"), getAllOrders);
+router.get(
+  "/admin/stats",
+  authMiddleware,
+  roleMiddleware("admin"),
+  getOrderStats,
+);
 router.get("/:orderId", authMiddleware, getOrderById);
 router.put(
   "/:orderId/status",

@@ -270,3 +270,36 @@ export const getAllOrders = asyncHandler(
     });
   },
 );
+
+export const getOrderStats = asyncHandler(
+  async (req: Request, res: Response): Promise<void> => {
+    const stats = await Order.aggregate([
+      {
+        $group: {
+          _id: "$status",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const result = {
+      total: 0,
+      pending: 0,
+      confirmed: 0,
+      shipped: 0,
+      delivered: 0,
+      cancelled: 0,
+    };
+
+    for (const item of stats) {
+      result[item._id as keyof typeof result] = item.count;
+      result.total += item.count;
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Order statistics fetched successfully",
+      data: result,
+    });
+  },
+);
