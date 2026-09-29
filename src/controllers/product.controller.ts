@@ -4,6 +4,7 @@ import asyncHandler from "../utils/asyncHandler.js";
 import AppError from "../utils/AppError.js";
 import Category from "../models/category.model.js";
 import { getProductsQuerySchema } from "../validators/product.validator.js";
+import Review from "../models/review.model.js";
 
 export const createProduct = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
@@ -81,10 +82,47 @@ export const getProducts = async (
     const totalProducts = await Product.countDocuments(filter);
     const totalPages = Math.ceil(totalProducts / limit);
 
+    const productIds = products.map((product) => product._id);
+
+    const reviewStats = await Review.aggregate([
+      {
+        $match: {
+          product: { $in: productIds },
+        },
+      },
+      {
+        $group: {
+          _id: "$product",
+          averageRating: { $avg: "$rating" },
+          reviewCount: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const reviewMap = new Map(
+      reviewStats.map((item) => [
+        item._id.toString(),
+        {
+          rating: Number(item.averageRating.toFixed(1)),
+          reviewCount: item.reviewCount,
+        },
+      ]),
+    );
+
+    const productsWithReviews = products.map((product) => {
+      const stats = reviewMap.get(product._id.toString());
+
+      return {
+        ...product.toObject(),
+        rating: stats?.rating ?? 0,
+        reviewCount: stats?.reviewCount ?? 0,
+      };
+    });
+
     res.status(200).json({
       success: true,
       message: "Products fetched successfully",
-      data: products,
+      data: productsWithReviews,
       pagination: {
         page,
         limit,
@@ -110,9 +148,32 @@ export const getProductById = asyncHandler(
       throw new AppError("Product not found", 404);
     }
 
+    const reviewStats = await Review.aggregate([
+      {
+        $match: {
+          product: product._id,
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          averageRating: { $avg: "$rating" },
+          reviewCount: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const stats = reviewStats[0];
+
+    const productWithReviews = {
+      ...product.toObject(),
+      rating: stats ? Number(stats.averageRating.toFixed(1)) : 0,
+      reviewCount: stats?.reviewCount ?? 0,
+    };
+
     res.status(200).json({
       success: true,
-      data: product,
+      data: productWithReviews,
     });
   },
 );
