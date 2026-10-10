@@ -2,10 +2,7 @@ import { Readable } from "node:stream";
 import cloudinary from "../config/cloudinary.js";
 
 const uploadImageStream = async (buffer: Buffer) => {
-  return new Promise<{
-    url: string;
-    publicId: string;
-  }>((resolve, reject) => {
+  return new Promise<{ url: string; publicId: string }>((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
       {
         folder: "ecommerce/products",
@@ -29,8 +26,7 @@ const uploadImageStream = async (buffer: Buffer) => {
       },
     );
 
-    // Convert the buffer to a readable stream and pipe (send) it to the Cloudinary upload stream
-    Readable.from(buffer).pipe(stream);
+    Readable.from(buffer).on("error", reject).pipe(stream);
   });
 };
 

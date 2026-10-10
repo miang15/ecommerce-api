@@ -7,6 +7,7 @@ import cartRoutes from "./routes/cart.routes.js";
 import orderRoutes from "./routes/order.routes.js";
 import reviewRoutes from "./routes/review.routes.js";
 import wishlistRoutes from "./routes/wishlist.routes.js";
+import uploadRoutes from "./routes/upload.routes.js";
 
 const app = express();
 
@@ -19,6 +20,7 @@ app.use("/api/cart", cartRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api", reviewRoutes);
 app.use("/api/wishlist", wishlistRoutes);
+app.use("/api/uploads", uploadRoutes);
 
 // Must be after routes
 app.use(errorMiddleware);

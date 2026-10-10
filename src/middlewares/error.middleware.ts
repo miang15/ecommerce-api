@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import mongoose from "mongoose";
 import AppError from "../utils/AppError.js";
+import multer from "multer";
 
 const errorMiddleware = (
   error: Error,
@@ -33,6 +34,19 @@ const errorMiddleware = (
     });
 
     return;
+  }
+
+  // Inside your existing error middleware:
+  if (error instanceof multer.MulterError) {
+    const statusCode = error.code === "LIMIT_FILE_SIZE" ? 413 : 400;
+
+    res.status(statusCode).json({
+      success: false,
+      message:
+        error.code === "LIMIT_FILE_SIZE"
+          ? "Image must not exceed 5 MB"
+          : error.message,
+    });
   }
 
   console.error(error);
