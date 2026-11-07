@@ -30,10 +30,14 @@ const productSchema = new mongoose.Schema(
       default: 0,
       min: 0,
     },
-
     image: {
       type: String,
       default: "",
+      required: true,
+    },
+    imagePublicId: {
+      type: String,
+      default: null,
     },
 
     isActive: {

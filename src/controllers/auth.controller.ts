@@ -21,7 +21,7 @@ export const register = asyncHandler(
     const user = await User.create({
       name,
       email,
-      role,
+      role: "user",
       password: hashedPassword,
     });
 
@@ -61,7 +61,12 @@ export const login = asyncHandler(
       },
       env.JWT_SECRET,
       {
-        expiresIn: "7d",
+        //
+        algorithm: "HS256",
+        expiresIn:
+          env.JWT_ACCESS_TOKEN_EXPIRES_IN as jwt.SignOptions["expiresIn"],
+        issuer: env.JWT_ISSUER,
+        audience: env.JWT_AUDIENCE,
       },
     );
 

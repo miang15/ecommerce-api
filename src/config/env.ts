@@ -20,4 +20,13 @@ export const env = {
   MONGODB_URI: requiredEnv("MONGODB_URI"),
 
   JWT_SECRET: requiredEnv("JWT_SECRET"),
+
+  CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,
+  CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,
+  CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET,
+
+  JWT_ACCESS_TOKEN_EXPIRES_IN: process.env.JWT_ACCESS_TOKEN_EXPIRES_IN || "15m",
+
+  JWT_ISSUER: process.env.JWT_ISSUER || "ecommerce-api",
+  JWT_AUDIENCE: process.env.JWT_AUDIENCE || "ecommerce-client",
 };

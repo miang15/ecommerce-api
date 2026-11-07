@@ -1,10 +1,85 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import Product from "../models/product.model.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import AppError from "../utils/AppError.js";
 import Category from "../models/category.model.js";
-import { getProductsQuerySchema } from "../validators/product.validator.js";
+import {
+  createProductSchema,
+  getProductsQuerySchema,
+} from "../validators/product.validator.js";
 import Review from "../models/review.model.js";
+
+import {
+  createProductWithImage,
+  replaceProductImage,
+} from "../services/product.service.js";
+
+export const createProductWithUploadedImage = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    if (!req.file) {
+      throw new AppError("A product image is required", 400);
+    }
+
+    const validation = createProductSchema.safeParse(req.body);
+
+    if (!validation.success) {
+      throw new AppError("Invalid product data", 400);
+    }
+
+    const category = await Category.findOne({
+      _id: validation.data.category,
+      isActive: true,
+    });
+
+    if (!category) {
+      throw new AppError("Category not found or inactive", 404);
+    }
+
+    const product = await createProductWithImage(
+      {
+        ...validation.data,
+        createdBy: req.user!.userId,
+      },
+      req.file.buffer,
+    );
+
+    res.status(201).json({
+      success: true,
+      message: "Product created successfully",
+      data: product,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const replaceUploadedProductImage = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    if (!req.file) {
+      throw new AppError("An image file is required", 400);
+    }
+
+    const productId = req.params.id as string;
+
+    const product = await replaceProductImage(productId, req.file.buffer);
+
+    res.status(200).json({
+      success: true,
+      message: "Product image updated successfully",
+      data: product,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 export const createProduct = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
